@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>薪资计算器</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1a2e;
+  --ink2: #2d2d4e;
+  --gold: #c9a84c;
+  --gold-l: #e8c97a;
+  --gold-pale: #fdf8ee;
+  --red: #c0392b;
+  --green: #1e8449;
+  --blue: #2471a3;
+  --bg: #f4f0e8;
+  --white: #ffffff;
+  --border: #ddd0b0;
+  --border2: #e8e0cc;
+  --shadow: rgba(26,26,46,0.10);
+  --radius: 3px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:14px;}
+body{
+  background:var(--bg);
+  font-family:'Noto Sans SC',sans-serif;
+  color:var(--ink);
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(201,168,76,0.07) 0%, transparent 55%),
+    radial-gradient(circle at 85% 85%, rgba(201,168,76,0.05) 0%, transparent 55%);
+  min-height:100vh;
+}
+
+/* ─── LAYOUT ─────────────────────────────────────── */
+.app{display:grid;grid-template-columns:380px 1fr;min-height:100vh;}
+@media(max-width:960px){.app{grid-template-columns:1fr;}}
+
+/* ─── LEFT PANEL ──────────────────────────────────── */
+.left-panel{
+  background:var(--ink);
+  padding:0;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(201,168,76,0.3) transparent;
+}
+.left-panel::-webkit-scrollbar{width:4px;}
+.left-panel::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.3);border-radius:2px;}
+
+.panel-header{
+  background:linear-gradient(135deg, #0f0f1e, #1a1a2e);
+  padding:28px 24px 20px;
+  border-bottom:2px solid var(--gold);
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+.panel-header .logo{
+  display:flex;align-items:center;gap:10px;margin-bottom:6px;
+}
+.logo-icon{
+  width:32px;height:32px;background:var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Noto Serif SC',serif;font-size:14px;font-weight:700;
+  color:var(--ink);border-radius:2px;
+}
+.panel-header h1{
+  font-family:'Noto Serif SC',serif;
+  font-size:16px;font-weight:700;
+  color:var(--white);letter-spacing:2px;
+}
+.panel-header p{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-top:2px;}
+
+/* ─── FORM SECTIONS ──────────────────────────────── */
+.form-section{padding:0 20px 4px;}
+.form-section+.form-section{border-top:1px solid rgba(255,255,255,0.06);}
+
+.section-label{
+  display:flex;align-items:center;gap:8px;
+  padding:14px 0 8px;
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  color:var(--gold);text-transform:uppercase;
+  cursor:pointer;user-select:none;
+}
+.section-label .arrow{
+  margin-left:auto;font-size:10px;
+  color:rgba(255,255,255,0.3);
+  transition:transform .2s;
+}
+.section-label.collapsed .arrow{transform:rotate(-90deg);}
+.section-body{overflow:hidden;transition:max-height .3s ease;}
+.section-body.collapsed{max-height:0!important;}
+
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.field-row.single{grid-template-columns:1fr;}
+.field-row.triple{grid-template-columns:1fr 1fr 1fr;}
+
+.field{display:flex;flex-direction:column;gap:3px;}
+.field label{
+  font-size:10px;color:rgba(255,255,255,0.5);
+  letter-spacing:.5px;padding-left:1px;
+}
+.field input,.field select{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:var(--radius);
+  color:var(--white);
+  padding:7px 10px;font-size:12px;
+  font-family:'Noto Sans SC',sans-serif;
+  transition:all .2s;outline:none;width:100%;
+}
+.field input:focus,.field select:focus{
+  border-color:var(--gold);
+  background:rgba(201,168,76,0.08);
+  box-shadow:0 0 0 2px rgba(201,168,76,0.1);
+}
+.field select option{background:#1a1a2e;color:#fff;}
+.field input[type=number]{-moz-appearance:textfield;}
+.field input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+.hint{font-size:9px;color:rgba(255,255,255,0.25);padding-left:1px;}
+
+.calc-btn{
+  margin:16px 20px 20px;
+  width:calc(100% - 40px);
+  background:var(--gold);
+  color:var(--ink);
+  border:none;border-radius:var(--radius);
+  padding:12px;font-size:13px;font-weight:700;
+  font-family:'Noto Sans SC',sans-serif;
+  letter-spacing:2px;cursor:pointer;
+  transition:all .2s;
+  position:relative;overflow:hidden;
+}
+.calc-btn:hover{background:var(--gold-l);transform:translateY(-1px);box-shadow:0 4px 16px rgba(201,168,76,0.3);}
+.calc-btn:active{transform:translateY(0);}
+
+/* ─── RIGHT PANEL ────────────────────────────────── */
+.right-panel{padding:28px 28px 60px;overflow-y:auto;}
+
+.results-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;
+}
+.results-header h2{
+  font-family:'Noto Serif SC',serif;
+  font-size:18px;font-weight:700;
+  color:var(--ink);letter-spacing:1px;
+}
+.results-header .date-tag{
+  font-size:10px;color:#999;letter-spacing:1px;
+  background:var(--white);border:1px solid var(--border);
+  padding:4px 10px;border-radius:20px;
+}
+
+/* ─── SUMMARY CARDS ──────────────────────────────── */
+.summary-cards{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+  margin-bottom:20px;
+}
+@media(max-width:1100px){.summary-cards{grid-template-columns:repeat(2,1fr);}}
+
+.summary-card{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px 18px;
+  position:relative;overflow:hidden;
+  box-shadow:0 2px 10px var(--shadow);
+}
+.summary-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--gold);
+}
+.summary-card.green::before{background:var(--green);}
+.summary-card.red::before{background:var(--red);}
+.summary-card.blue::before{background:var(--blue);}
+.summary-card .card-label{
+  font-size:10px;color:#888;letter-spacing:1px;margin-bottom:6px;
+}
+.summary-card .card-value{
+  font-family:'Noto Serif SC',serif;
+  font-size:22px;font-weight:700;color:var(--ink);
+  line-height:1.2;
+}
+.summary-card .card-value.green{color:var(--green);}
+.summary-card .card-value.red{color:var(--red);}
+.summary-card .card-value .unit{font-size:12px;font-weight:400;color:#999;margin-left:2px;}
+.summary-card .card-sub{font-size:10px;color:#aaa;margin-top:4px;}
+
+/* ─── BREAKDOWN ──────────────────────────────────── */
+.breakdown-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;
+  margin-bottom:20px;
+}
+@media(max-width:800px){.breakdown-grid{grid-template-columns:1fr;}}
+
+.card{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  box-shadow:0 2px 10px var(--shadow);
+}
+.card-header{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 18px;
+  background:linear-gradient(135deg,var(--gold-pale),var(--white));
+  border-bottom:1px solid var(--border2);
+}
+.card-num{
+  width:24px;height:24px;background:var(--ink);
+  color:var(--gold);display:flex;align-items:center;justify-content:center;
+  font-family:'Noto Serif SC',serif;font-size:11px;font-weight:700;
+  border-radius:2px;flex-shrink:0;
+}
+.card-title{
+  font-family:'Noto Serif SC',serif;font-size:13px;
+  font-weight:700;color:var(--ink);letter-spacing:.5px;
+}
+.card-body{padding:14px 18px;}
+
+.line-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px dashed var(--border2);
+  font-size:12px;
+}
+.line-item:last-child{border-bottom:none;}
+.line-item.total{
+  border-top:2px solid var(--gold);border-bottom:none;
+  margin-top:4px;padding-top:10px;
+}
+.line-item .li-label{color:#555;}
+.line-item .li-value{
+  font-family:'Noto Serif SC',serif;font-weight:700;
+  color:var(--ink);font-size:13px;
+}
+.line-item.total .li-label{font-weight:700;color:var(--ink);font-size:13px;}
+.line-item.total .li-value{font-size:15px;color:var(--red);}
+.line-item.deduct .li-value{color:var(--red);}
+.line-item.net .li-value{color:var(--green);font-size:15px;}
+.badge-tag{
+  display:inline-block;padding:1px 6px;border-radius:10px;
+  font-size:9px;margin-left:4px;
+}
+.badge-tag.ot{background:rgba(201,168,76,0.15);color:var(--gold);}
+
+/* ─── SOCIAL INSURANCE ──────────────────────────── */
+.si-table{width:100%;border-collapse:collapse;}
+.si-table th{
+  background:var(--ink);color:var(--gold);
+  font-size:10px;letter-spacing:1px;padding:7px 10px;text-align:left;
+  font-weight:500;
+}
+.si-table td{
+  padding:7px 10px;font-size:11px;
+  border-bottom:1px solid var(--border2);
+}
+.si-table tr:hover td{background:var(--gold-pale);}
+.si-table .num{text-align:right;font-family:'Noto Serif SC',serif;font-weight:700;}
+
+/* ─── IIT TABLE ──────────────────────────────────── */
+.iit-card{margin-bottom:20px;}
+.iit-card .card-body{padding:0;}
+.iit-table{width:100%;border-collapse:collapse;}
+.iit-table th{
+  background:var(--ink);color:var(--gold);
+  font-size:10px;letter-spacing:1px;padding:9px 12px;text-align:left;font-weight:500;
+}
+.iit-table td{
+  padding:9px 12px;font-size:11px;
+  border-bottom:1px solid var(--border2);
+}
+.iit-table tr:last-child td{border-bottom:none;}
+.iit-table tr:hover td{background:var(--gold-pale);}
+.iit-table .num{text-align:right;font-family:'Noto Serif SC',serif;font-weight:700;}
+.iit-table .month-col{color:var(--ink2);font-weight:500;}
+.iit-table .tax-col{color:var(--red);font-weight:700;}
+.iit-table .net-col{color:var(--green);font-weight:700;}
+.iit-table tfoot td{
+  background:linear-gradient(135deg,var(--ink),#2d2d4e);
+  color:var(--gold-l);font-weight:700;font-size:12px;
+  padding:10px 12px;
+}
+.iit-table tfoot .num{color:var(--gold-l);}
+
+/* ─── BAR CHART ──────────────────────────────────── */
+.chart-area{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:0 2px 10px var(--shadow);
+  margin-bottom:20px;overflow:hidden;
+}
+.chart-header{
+  padding:14px 18px;
+  background:linear-gradient(135deg,var(--gold-pale),var(--white));
+  border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;gap:10px;
+}
+.chart-body{padding:20px 18px 16px;}
+.bar-chart{display:flex;gap:6px;align-items:flex-end;height:120px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{
+  width:100%;background:linear-gradient(180deg,var(--gold-l),var(--gold));
+  border-radius:2px 2px 0 0;
+  transition:height .6s cubic-bezier(.34,1.56,.64,1);
+  position:relative;cursor:pointer;min-height:4px;
+}
+.bar:hover{filter:brightness(1.1);}
+.bar.tax-bar{background:linear-gradient(180deg,#e57373,var(--red));}
+.bar-label{font-size:9px;color:#888;text-align:center;}
+.bar-val{font-size:9px;color:var(--ink);font-weight:700;text-align:center;}
+.chart-legend{display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:#666;}
+.legend-dot{width:10px;height:10px;border-radius:1px;}
+.legend-dot.income{background:var(--gold);}
+.legend-dot.tax{background:var(--red);}
+
+/* ─── RANGE DISPLAY ─────────────────────────────── */
+.range-card{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 18px;
+  box-shadow:0 2px 10px var(--shadow);
+  margin-bottom:20px;
+}
+.range-bar-outer{
+  height:10px;background:#e8e0cc;border-radius:5px;
+  margin:10px 0 6px;overflow:hidden;position:relative;
+}
+.range-bar-fill{
+  height:100%;border-radius:5px;
+  background:linear-gradient(90deg,var(--green),var(--gold),var(--red));
+  transition:width .8s ease;
+}
+.range-labels{display:flex;justify-content:space-between;font-size:10px;}
+
+/* ─── EMPTY STATE ────────────────────────────────── */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:60vh;gap:12px;opacity:.5;
+}
+.empty-state svg{width:60px;height:60px;opacity:.3;}
+.empty-state p{font-size:13px;color:#888;letter-spacing:1px;}
+
+/* ─── TOOLTIP ────────────────────────────────────── */
+.tooltip{
+  position:fixed;background:var(--ink);color:var(--white);
+  padding:5px 10px;border-radius:3px;font-size:10px;
+  pointer-events:none;z-index:9999;display:none;
+  border:1px solid var(--gold);white-space:nowrap;
+}
+
+/* ─── DIVIDER ────────────────────────────────────── */
+.divider{
+  height:1px;margin:8px 20px;
+  background:rgba(255,255,255,0.06);
+}
+
+.gold-bar{height:2px;background:linear-gradient(90deg,var(--gold),transparent);margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<div class="app">
+<!-- ═══════════════ LEFT PANEL ══════════════════ -->
+<div class="left-panel">
+  <div class="panel-header">
+    <div class="logo">
+      <div class="logo-icon">薪</div>
+      <div>
+        <h1>薪资计算器</h1>
+        <p>SALARY CALCULATOR · PRO</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 基本设置 -->
+  <div class="form-section">
+    <div class="section-label" onclick="toggleSection(this)">
+      <span>⚙</span> 基本设置
+      <span class="arrow">▾</span>
+    </div>
+    <div class="section-body" style="max-height:500px;">
+      <div class="field-row">
+        <div class="field">
+          <label>基本工资（元）</label>
+          <input type="number" id="base_salary" value="2520" placeholder="2520">
+        </div>
+        <div class="field">
+          <label>工作制（天/周）</label>
+          <input type="number" id="work_days" value="5" min="1" max="7" step="1" placeholder="5">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>每天工时（小时）</label>
+          <select id="work_hours">
+            <option value="8" selected>8小时</option>
+            <option value="9">9小时</option>
+            <option value="10">10小时</option>
+            <option value="12">12小时</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>社保基数依据</label>
+          <select id="si_base_type">
+            <option value="base">基本工资</option>
+            <option value="actual">实际应发工资</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row single">
+        <div class="field">
+          <label>所在城市/地区</label>
+          <select id="city_select" onchange="onCityChange()">
+            <option value="">-- 选择城市自动填充最低工资 --</option>
+            <optgroup label="直辖市">
+              <option value="2690">北京市</option>
+              <option value="2690">上海市</option>
+              <option value="2160">天津市</option>
+              <option value="2100">重庆市（主城区）</option>
+              <option value="1900">重庆市（其他地区）</option>
+            </optgroup>
+            <optgroup label="广东省">
+              <option value="2360">广州市</option>
+              <option value="2360">深圳市</option>
+              <option value="2100">珠海市</option>
+              <option value="2100">佛山市</option>
+              <option value="2100">东莞市</option>
+              <option value="2100">中山市</option>
+              <option value="2010">惠州市</option>
+              <option value="2010">江门市</option>
+              <option value="2010">肇庆市</option>
+              <option value="1900">潮州市/汕头市/揭阳市</option>
+              <option value="1900">汕尾市/梅州市/河源市</option>
+              <option value="1900">清远市/韶关市/云浮市</option>
+              <option value="1900">阳江市/茂名市/湛江市</option>
+            </optgroup>
+            <optgroup label="江苏省">
+              <option value="2490">南京市</option>
+              <option value="2490">苏州市</option>
+              <option value="2280">无锡市</option>
+              <option value="2280">常州市</option>
+              <option value="2280">南通市</option>
+              <option value="2280">镇江市</option>
+              <option value="2190">扬州市</option>
+              <option value="2190">泰州市</option>
+              <option value="2190">盐城市</option>
+              <option value="2190">连云港市</option>
+              <option value="2190">淮安市</option>
+              <option value="2190">宿迁市</option>
+              <option value="2190">徐州市</option>
+            </optgroup>
+            <optgroup label="浙江省">
+              <option value="2490">杭州市</option>
+              <option value="2490">宁波市</option>
+              <option value="2360">温州市</option>
+              <option value="2360">绍兴市</option>
+              <option value="2360">嘉兴市</option>
+              <option value="2360">湖州市</option>
+              <option value="2280">金华市</option>
+              <option value="2280">台州市</option>
+              <option value="2190">衢州市</option>
+              <option value="2190">丽水市</option>
+              <option value="2190">舟山市</option>
+            </optgroup>
+            <optgroup label="山东省">
+              <option value="2100">济南市</option>
+              <option value="2100">青岛市</option>
+              <option value="2100">烟台市</option>
+              <option value="1900">山东省其他城市</option>
+            </optgroup>
+            <optgroup label="湖北省">
+              <option value="2010">武汉市</option>
+              <option value="1900">湖北省其他城市</option>
+            </optgroup>
+            <optgroup label="湖南省">
+              <option value="2010">长沙市</option>
+              <option value="1900">湖南省其他城市</option>
+            </optgroup>
+            <optgroup label="四川省">
+              <option value="2100">成都市</option>
+              <option value="1870">四川省其他城市</option>
+            </optgroup>
+            <optgroup label="陕西省">
+              <option value="2160">西安市</option>
+              <option value="1900">陕西省其他城市</option>
+            </optgroup>
+            <optgroup label="河南省">
+              <option value="2100">郑州市</option>
+              <option value="1900">河南省其他城市</option>
+            </optgroup>
+            <optgroup label="河北省">
+              <option value="2200">石家庄市</option>
+              <option value="2000">河北省其他城市</option>
+            </optgroup>
+            <optgroup label="安徽省">
+              <option value="2060">合肥市</option>
+              <option value="1900">安徽省其他城市</option>
+            </optgroup>
+            <optgroup label="福建省">
+              <option value="2100">福州市</option>
+              <option value="2100">厦门市</option>
+              <option value="1900">福建省其他城市</option>
+            </optgroup>
+            <optgroup label="辽宁省">
+              <option value="2100">沈阳市</option>
+              <option value="1900">辽宁省其他城市</option>
+            </optgroup>
+            <optgroup label="吉林省">
+              <option value="1880">长春市</option>
+              <option value="1780">吉林省其他城市</option>
+            </optgroup>
+            <optgroup label="黑龙江省">
+              <option value="1900">哈尔滨市</option>
+              <option value="1700">黑龙江省其他城市</option>
+            </optgroup>
+            <optgroup label="云南省">
+              <option value="1900">昆明市</option>
+              <option value="1700">云南省其他城市</option>
+            </optgroup>
+            <optgroup label="贵州省">
+              <option value="1890">贵阳市</option>
+              <option value="1790">贵州省其他城市</option>
+            </optgroup>
+            <optgroup label="广西">
+              <option value="1990">南宁市</option>
+              <option value="1800">广西其他城市</option>
+            </optgroup>
+            <optgroup label="海南省">
+              <option value="1830">海南省（统一）</option>
+            </optgroup>
+            <optgroup label="山西省">
+              <option value="1900">太原市</option>
+              <option value="1700">山西省其他城市</option>
+            </optgroup>
+            <optgroup label="江西省">
+              <option value="2010">南昌市</option>
+              <option value="1850">江西省其他城市</option>
+            </optgroup>
+            <optgroup label="内蒙古">
+              <option value="1980">呼和浩特市</option>
+              <option value="1800">内蒙古其他城市</option>
+            </optgroup>
+            <optgroup label="新疆">
+              <option value="1900">乌鲁木齐市</option>
+              <option value="1720">新疆其他城市</option>
+            </optgroup>
+            <optgroup label="甘肃省">
+              <option value="1850">兰州市</option>
+              <option value="1700">甘肃省其他城市</option>
+            </optgroup>
+            <optgroup label="其他">
+              <option value="1800">手动输入</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>最低工资标准（元/月）</label>
+          <input type="number" id="min_wage" value="2590" placeholder="2590">
+        </div>
+        <div class="field">
+          <label>计税起点（元）</label>
+          <input type="number" id="tax_threshold" value="5000" placeholder="5000">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- 固定薪酬 -->
+  <div class="form-section">
+    <div class="section-label" onclick="toggleSection(this)">
+      <span>💰</span> 固定薪酬
+      <span class="arrow">▾</span>
+    </div>
+    <div class="section-body" style="max-height:500px;">
+      <div class="field-row">
+        <div class="field">
+          <label>全勤奖（元）</label>
+          <input type="number" id="attendance" value="1000" placeholder="0">
+        </div>
+        <div class="field">
+          <label>夜班补助（元/月）</label>
+          <input type="number" id="night_allowance" value="1200" placeholder="0">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>绩效奖金—最低</label>
+          <input type="number" id="perf_min" value="100" placeholder="0">
+        </div>
+        <div class="field">
+          <label>绩效奖金—最高</label>
+          <input type="number" id="perf_max" value="500" placeholder="0">
+        </div>
+      </div>
+      <div class="field-row single">
+        <div class="field">
+          <label>其他补贴（元/月，多项逗号分隔）</label>
+          <input type="text" id="other_allowance" value="0" placeholder="如: 交通补贴100,餐补200">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- 加班设置 -->
+  <div class="form-section">
+    <div class="section-label" onclick="toggleSection(this)">
+      <span>⏱</span> 加班设置
+      <span class="arrow">▾</span>
+    </div>
+    <div class="section-body" style="max-height:600px;">
+      <div class="field-row triple">
+        <div class="field">
+          <label>加班费率类型</label>
+        </div>
+        <div class="field">
+          <label>加班费（元/时）</label>
+        </div>
+        <div class="field">
+          <label>每月小时数</label>
+        </div>
+      </div>
+      <!-- 平时 -->
+      <div class="field-row triple">
+        <div class="field" style="justify-content:center;padding-top:7px;">
+          <span style="font-size:11px;color:rgba(255,255,255,0.6);">平时（工作日）</span>
+        </div>
+        <div class="field">
+          <input type="number" id="ot_weekday_rate" value="21.5" step="0.1" placeholder="21.5">
+        </div>
+        <div class="field">
+          <input type="number" id="ot_weekday_hours" value="48" placeholder="48">
+        </div>
+      </div>
+      <!-- 周末 -->
+      <div class="field-row triple">
+        <div class="field" style="justify-content:center;padding-top:7px;">
+          <span style="font-size:11px;color:rgba(255,255,255,0.6);">周末（休息日）</span>
+        </div>
+        <div class="field">
+          <input type="number" id="ot_weekend_rate" value="28.7" step="0.1" placeholder="28.7">
+        </div>
+        <div class="field">
+          <input type="number" id="ot_weekend_hours" value="40" placeholder="40">
+        </div>
+      </div>
+      <!-- 法定 -->
+      <div class="field-row triple">
+        <div class="field" style="justify-content:center;padding-top:7px;">
+          <span style="font-size:11px;color:rgba(255,255,255,0.6);">法定节假日</span>
+        </div>
+        <div class="field">
+          <input type="number" id="ot_holiday_rate" value="43.0" step="0.1" placeholder="43.0">
+        </div>
+        <div class="field">
+          <input type="number" id="ot_holiday_hours" value="0" placeholder="0">
+        </div>
+      </div>
+      <p class="hint" style="padding:4px 0 8px;">加班费率 = 基本工资 ÷ 月计薪天数 ÷ 每日工时 × 1.5/2/3</p>
+      <div class="field-row">
+        <div class="field">
+          <label>🔧 自动计算加班费率</label>
+          <select id="auto_rate">
+            <option value="0">手动输入</option>
+            <option value="1">自动按法定计算</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>月计薪天数</label>
+          <input type="number" id="monthly_days" value="21.75" step="0.25" placeholder="21.75">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- 社保设置 -->
+  <div class="form-section">
+    <div class="section-label" onclick="toggleSection(this)">
+      <span>🏥</span> 社保 / 公积金
+      <span class="arrow">▾</span>
+    </div>
+    <div class="section-body" style="max-height:500px;">
+      <div class="field-row">
+        <div class="field">
+          <label>养老保险（个人%）</label>
+          <input type="number" id="si_pension" value="8" step="0.5" placeholder="8">
+        </div>
+        <div class="field">
+          <label>医疗保险（个人%）</label>
+          <input type="number" id="si_medical" value="2" step="0.5" placeholder="2">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>失业保险（个人%）</label>
+          <input type="number" id="si_unemploy" value="0.5" step="0.5" placeholder="0.5">
+        </div>
+        <div class="field">
+          <label>工伤/生育（公司承担）</label>
+          <input type="number" id="si_injury" value="0" step="0.1" disabled style="opacity:.4;">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>住房公积金（个人%）</label>
+          <input type="number" id="hf_rate" value="5" step="1" placeholder="5">
+        </div>
+        <div class="field">
+          <label>大病医疗（固定元/月）</label>
+          <input type="number" id="si_serious" value="3" step="1" placeholder="3">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- 个税专项附加扣除 -->
+  <div class="form-section">
+    <div class="section-label" onclick="toggleSection(this)">
+      <span>🧾</span> 个税专项附加扣除
+      <span class="arrow">▾</span>
+    </div>
+    <div class="section-body" style="max-height:600px;">
+      <p class="hint" style="padding:4px 0 10px;">每月可税前扣除项目，直接减少当月应税收入</p>
+      <div class="field-row">
+        <div class="field">
+          <label>子女教育（元/月）</label>
+          <input type="number" id="ded_child" value="0" placeholder="2000/子女">
+        </div>
+        <div class="field">
+          <label>继续教育（元/月）</label>
+          <input type="number" id="ded_edu" value="0" placeholder="400">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>住房贷款利息（元/月）</label>
+          <input type="number" id="ded_loan" value="0" placeholder="1000">
+        </div>
+        <div class="field">
+          <label>住房租金（元/月）</label>
+          <input type="number" id="ded_rent" value="0" placeholder="800/1100/1500">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>赡养老人（元/月）</label>
+          <input type="number" id="ded_elder" value="0" placeholder="最高3000">
+        </div>
+        <div class="field">
+          <label>婴幼儿照护（元/月）</label>
+          <input type="number" id="ded_baby" value="0" placeholder="2000/子女">
+        </div>
+      </div>
+      <div class="field-row single">
+        <div class="field">
+          <label>其他扣除（大病/商业健康险等，元/月均摊）</label>
+          <input type="number" id="ded_other" value="0" placeholder="0">
+        </div>
+      </div>
+      <div style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:3px;padding:8px 12px;margin-top:4px;font-size:11px;color:rgba(255,255,255,0.7);">
+        月专项附加扣除合计：<span id="ded_total_val" style="color:var(--gold);font-weight:700;">¥ 0</span>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- 月份加班微调 -->
+  <div class="form-section">
+    <div class="section-label collapsed" onclick="toggleSection(this)">
+      <span>📅</span> 各月加班微调（可选）
+      <span class="arrow">▾</span>
+    </div>
+    <div class="section-body collapsed" style="max-height:0;">
+      <p class="hint" style="padding:4px 0 8px;">默认使用上方统一设置；可对特定月份单独设置加班小时。留空则使用默认值。</p>
+      <div id="monthly-adj-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calculate()">✦ 立即计算</button>
+</div>
+
+<!-- ═══════════════ RIGHT PANEL ══════════════════ -->
+<div class="right-panel" id="right-panel">
+  <div class="empty-state" id="empty-state">
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="6" width="44" height="48" rx="3" stroke="#c9a84c" stroke-width="2"/>
+      <line x1="16" y1="18" x2="44" y2="18" stroke="#c9a84c" stroke-width="1.5"/>
+      <line x1="16" y1="26" x2="44" y2="26" stroke="#c9a84c" stroke-width="1.5"/>
+      <line x1="16" y1="34" x2="36" y2="34" stroke="#c9a84c" stroke-width="1.5"/>
+      <circle cx="44" cy="44" r="10" fill="#1a1a2e" stroke="#c9a84c" stroke-width="1.5"/>
+      <text x="44" y="48" text-anchor="middle" fill="#c9a84c" font-size="12">¥</text>
+    </svg>
+    <p>填写左侧参数，点击「立即计算」</p>
+  </div>
+  <div id="results" style="display:none;"></div>
+</div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ──────────────────────────────────────────────────────────────
+// 月份微调输入
+const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const adjGrid = document.getElementById('monthly-adj-grid');
+MONTHS.forEach((m,i) => {
+  adjGrid.innerHTML += `
+    <div class="field">
+      <label>${m} 加班时长(工/末/假)</label>
+      <input type="text" id="adj_${i}" placeholder="默认" style="font-size:10px;">
+    </div>`;
+});
+
+// ──────────────────────────────────────────────────────────────
+// 自动计算加班费率
+document.getElementById('auto_rate').addEventListener('change', function() {
+  if (this.value === '1') autoCalcRates();
+});
+['base_salary','monthly_days','work_hours','auto_rate'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', () => {
+    if (document.getElementById('auto_rate').value === '1') autoCalcRates();
+  });
+});
+function autoCalcRates() {
+  const base = parseFloat(document.getElementById('base_salary').value)||0;
+  const md   = parseFloat(document.getElementById('monthly_days').value)||21.75;
+  const wh   = parseFloat(document.getElementById('work_hours').value)||8;
+  const hourly = base / md / wh;
+  document.getElementById('ot_weekday_rate').value = (hourly * 1.5).toFixed(2);
+  document.getElementById('ot_weekend_rate').value  = (hourly * 2).toFixed(2);
+  document.getElementById('ot_holiday_rate').value  = (hourly * 3).toFixed(2);
+}
+
+// ──────────────────────────────────────────────────────────────
+// Toggle section
+function toggleSection(el) {
+  el.classList.toggle('collapsed');
+  const body = el.nextElementSibling;
+  if (body.classList.contains('collapsed')) {
+    body.classList.remove('collapsed');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  } else {
+    body.classList.add('collapsed');
+    body.style.maxHeight = '0';
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// IIT (个人所得税) 累进税率
+const IIT_BRACKETS = [
+  { limit: 36000,  rate: 0.03, deduct: 0 },
+  { limit: 144000, rate: 0.10, deduct: 2520 },
+  { limit: 300000, rate: 0.20, deduct: 16920 },
+  { limit: 420000, rate: 0.25, deduct: 31920 },
+  { limit: 660000, rate: 0.30, deduct: 52920 },
+  { limit: 960000, rate: 0.35, deduct: 85920 },
+  { limit: Infinity,rate: 0.45, deduct: 181920 },
+];
+
+function calcIIT(annualTaxable) {
+  // 年度累进
+  for (const b of IIT_BRACKETS) {
+    if (annualTaxable <= b.limit) {
+      return Math.max(0, annualTaxable * b.rate - b.deduct);
+    }
+  }
+  return Math.max(0, annualTaxable * 0.45 - 181920);
+}
+
+// ──────────────────────────────────────────────────────────────
+// Parse other allowances
+function parseAllowances(str) {
+  if (!str || str.trim() === '0' || str.trim() === '') return 0;
+  const parts = str.split(/[,，]/);
+  let total = 0;
+  parts.forEach(p => {
+    const num = parseFloat(p.replace(/[^0-9.]/g,''));
+    if (!isNaN(num)) total += num;
+  });
+  return total;
+}
+
+// ──────────────────────────────────────────────────────────────
+// MAIN CALCULATE
+function calculate() {
+  const baseSalary     = parseFloat(document.getElementById('base_salary').value)||0;
+  const workDays       = parseInt(document.getElementById('work_days').value)||5;
+  const workHours      = parseFloat(document.getElementById('work_hours').value)||8;
+  const siBaseType     = document.getElementById('si_base_type').value;
+  const taxThreshold   = parseFloat(document.getElementById('tax_threshold').value)||5000;
+
+  const attendance     = parseFloat(document.getElementById('attendance').value)||0;
+  const nightAllow     = parseFloat(document.getElementById('night_allowance').value)||0;
+  const perfMin        = parseFloat(document.getElementById('perf_min').value)||0;
+  const perfMax        = parseFloat(document.getElementById('perf_max').value)||0;
+  const otherAllow     = parseAllowances(document.getElementById('other_allowance').value);
+
+  const otWdRate       = parseFloat(document.getElementById('ot_weekday_rate').value)||0;
+  const otWeRate       = parseFloat(document.getElementById('ot_weekend_rate').value)||0;
+  const otHdRate       = parseFloat(document.getElementById('ot_holiday_rate').value)||0;
+  const otWdHours      = parseFloat(document.getElementById('ot_weekday_hours').value)||0;
+  const otWeHours      = parseFloat(document.getElementById('ot_weekend_hours').value)||0;
+  const otHdHours      = parseFloat(document.getElementById('ot_holiday_hours').value)||0;
+
+  const siPension      = parseFloat(document.getElementById('si_pension').value)||0;
+  const siMedical      = parseFloat(document.getElementById('si_medical').value)||0;
+  const siUnemploy     = parseFloat(document.getElementById('si_unemploy').value)||0;
+  const hfRate         = parseFloat(document.getElementById('hf_rate').value)||0;
+  const siSerious      = parseFloat(document.getElementById('si_serious').value)||0;
+
+  // ── 专项附加扣除（每月）──────────────────────────────────────────
+  const dedChild  = parseFloat(document.getElementById('ded_child').value)||0;
+  const dedEdu    = parseFloat(document.getElementById('ded_edu').value)||0;
+  const dedLoan   = parseFloat(document.getElementById('ded_loan').value)||0;
+  const dedRent   = parseFloat(document.getElementById('ded_rent').value)||0;
+  const dedElder  = parseFloat(document.getElementById('ded_elder').value)||0;
+  const dedBaby   = parseFloat(document.getElementById('ded_baby').value)||0;
+  const dedOther  = parseFloat(document.getElementById('ded_other').value)||0;
+  const monthlyDed = dedChild + dedEdu + dedLoan + dedRent + dedElder + dedBaby + dedOther;
+
+  // 更新扣除合计显示
+  const dedDisp = document.getElementById('ded_total_val');
+  if (dedDisp) dedDisp.textContent = '¥ ' + fmt(monthlyDed);
+
+  // ── Per-month calculation ──────────────────────────────────────
+  const monthlyData = [];
+  // 累计预扣法：累计收入 / 累计扣除 / 累计已纳税
+  let cumGrossMid      = 0;  // 累计应发（mid）
+  let cumSI            = 0;  // 累计五险一金
+  let cumDed           = 0;  // 累计专项附加扣除
+  let cumThreshold     = 0;  // 累计起征点
+  let cumTaxPaid       = 0;  // 累计已预缴税额
+
+  for (let m = 0; m < 12; m++) {
+    // 获取本月加班微调
+    const adjVal = document.getElementById(`adj_${m}`)?.value?.trim();
+    let wdH = otWdHours, weH = otWeHours, hdH = otHdHours;
+    if (adjVal && adjVal !== '') {
+      const parts = adjVal.split('/').map(v => parseFloat(v)||0);
+      if (parts[0] !== undefined && !isNaN(parts[0])) wdH = parts[0];
+      if (parts[1] !== undefined && !isNaN(parts[1])) weH = parts[1];
+      if (parts[2] !== undefined && !isNaN(parts[2])) hdH = parts[2];
+    }
+
+    const otWd = wdH * otWdRate;
+    const otWe = weH * otWeRate;
+    const otHd = hdH * otHdRate;
+    const totalOT = otWd + otWe + otHd;
+
+    const perfMid = (perfMin + perfMax) / 2;
+
+    // 应发工资
+    const grossMin = baseSalary + attendance + nightAllow + totalOT + otherAllow + perfMin;
+    const grossMax = baseSalary + attendance + nightAllow + totalOT + otherAllow + perfMax;
+    const grossMid = baseSalary + attendance + nightAllow + totalOT + otherAllow + perfMid;
+
+    // 社保基数
+    const siBase = siBaseType === 'base' ? baseSalary : grossMid;
+
+    // 五险一金（个人部分）
+    const siTotal = siBase * (siPension + siMedical + siUnemploy) / 100
+                  + siBase * hfRate / 100
+                  + siSerious;
+
+    // ── 累计预扣法个税计算 ──────────────────────────────────────
+    // 公式：本月预缴税 = 累计应纳税所得额×税率-速扣数 - 已预缴税额
+    // 累计应纳税所得额 = 累计收入 - 累计五险一金 - 累计专项附加扣除 - 累计起征点(5000×月数)
+    cumGrossMid  += grossMid;
+    cumSI        += siTotal;
+    cumDed       += monthlyDed;
+    cumThreshold += taxThreshold;
+
+    const cumTaxable = Math.max(0, cumGrossMid - cumSI - cumDed - cumThreshold);
+    const cumTaxDue  = calcIIT(cumTaxable);
+    const monthTax   = Math.max(0, cumTaxDue - cumTaxPaid);
+    cumTaxPaid       = cumTaxDue;
+
+    // 本月应税收入（单月，用于展示）
+    const taxableMid = Math.max(0, grossMid - siTotal - monthlyDed - taxThreshold);
+
+    // 实发（税后）
+    const netMin = grossMin - siTotal - monthTax;
+    const netMax = grossMax - siTotal - monthTax;
+
+    monthlyData.push({
+      month: m + 1,
+      baseSalary, attendance, nightAllow, otherAllow,
+      perfMin, perfMax, perfMid,
+      otWd, otWe, otHd, totalOT,
+      grossMin, grossMax, grossMid,
+      siBase, siTotal, siPension: siBase*siPension/100,
+      siMedical: siBase*siMedical/100, siUnemploy: siBase*siUnemploy/100,
+      hf: siBase*hfRate/100, siSerious,
+      monthlyDed, taxableMid, cumTaxable, cumTaxDue,
+      monthTax, netMin, netMax, wdH, weH, hdH
+    });
+  }
+
+  // ── Annual summary ─────────────────────────────────────────────
+  const annualGrossMin  = monthlyData.reduce((s,m)=>s+m.grossMin, 0);
+  const annualGrossMax  = monthlyData.reduce((s,m)=>s+m.grossMax, 0);
+  const annualTaxTotal  = monthlyData.reduce((s,m)=>s+m.monthTax, 0);
+  const annualSITotal   = monthlyData.reduce((s,m)=>s+m.siTotal, 0);
+  const annualDedTotal  = monthlyData.reduce((s,m)=>s+m.monthlyDed, 0);
+  const annualNetMin    = monthlyData.reduce((s,m)=>s+m.netMin, 0);
+  const annualNetMax    = monthlyData.reduce((s,m)=>s+m.netMax, 0);
+
+  // ── Build result HTML ──────────────────────────────────────────
+  renderResults(monthlyData, {
+    annualGrossMin, annualGrossMax,
+    annualTaxTotal, annualSITotal, annualDedTotal,
+    annualNetMin, annualNetMax,
+    baseSalary, attendance, nightAllow, otherAllow,
+    perfMin, perfMax,
+    otWdRate, otWeRate, otHdRate,
+    otWdHours, otWeHours, otHdHours,
+    siBaseType, taxThreshold,
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+function fmt(n) { return Math.round(n).toLocaleString('zh-CN'); }
+function fmt2(n) { return n.toFixed(2); }
+
+function renderResults(data, annual) {
+  document.getElementById('empty-state').style.display = 'none';
+  const r = document.getElementById('results');
+  r.style.display = 'block';
+
+  const d0 = data[0]; // 第一个月做详细展示
+  const otTotal = d0.otWd + d0.otWe + d0.otHd;
+
+  // ── Chart data ────
+  const maxGross = Math.max(...data.map(m=>m.grossMax));
+  const barItems = data.map(m => {
+    const h1 = Math.round((m.grossMid / maxGross) * 110);
+    const h2 = Math.round((m.monthTax / maxGross) * 110);
+    return `
+      <div class="bar-wrap">
+        <div class="bar-val">${fmt(m.grossMid/10000*10)/10}k</div>
+        <div class="bar" style="height:${h1}px;"
+          onmouseenter="showTip(event,'${MONTHS[m.month-1]} 应发: ¥${fmt(m.grossMid)}')"
+          onmouseleave="hideTip()"></div>
+        <div class="bar tax-bar" style="height:${h2}px;margin-top:2px;"
+          onmouseenter="showTip(event,'${MONTHS[m.month-1]} 个税: ¥${fmt2(m.monthTax)}')"
+          onmouseleave="hideTip()"></div>
+        <div class="bar-label">${MONTHS[m.month-1].replace('月','')}</div>
+      </div>`;
+  }).join('');
+
+  // ── Social insurance breakdown ────
+  const siRows = [
+    ['养老保险',  `${fmt2(d0.siPension)}`, d0.siBase, '8%'],
+    ['医疗保险',  `${fmt2(d0.siMedical)}`, d0.siBase, '2%'],
+    ['失业保险',  `${fmt2(d0.siUnemploy)}`, d0.siBase, '0.5%'],
+    ['住房公积金',`${fmt2(d0.hf)}`,         d0.siBase, `${document.getElementById('hf_rate').value}%`],
+    ['大病医疗',  `${fmt2(d0.siSerious)}`,  '-',       '固定'],
+  ];
+  const siTR = siRows.map(([name, amt, base, rate]) => `
+    <tr>
+      <td>${name}</td>
+      <td class="num">${base !== '-' ? fmt(base) : '-'}</td>
+      <td class="num" style="color:#888;">${rate}</td>
+      <td class="num" style="color:var(--red);">¥ ${amt}</td>
+    </tr>`).join('');
+
+  // ── IIT table ────
+  const iitRows = data.map(m => `
+    <tr>
+      <td class="month-col">${MONTHS[m.month-1]}</td>
+      <td class="num">¥ ${fmt(m.grossMid)}</td>
+      <td class="num" style="color:#888;">¥ ${fmt(m.siTotal)}</td>
+      <td class="num" style="color:#c0392b;font-size:10px;">-¥ ${fmt(m.monthlyDed)}</td>
+      <td class="num">¥ ${fmt(m.cumTaxable)}</td>
+      <td class="num tax-col">¥ ${fmt2(m.monthTax)}</td>
+      <td class="num net-col">¥ ${fmt(m.netMin)} ~ ${fmt(m.netMax)}</td>
+    </tr>`).join('');
+
+  const rangeRatio = (annual.annualNetMin / (annual.annualGrossMax || 1)) * 80;
+
+  r.innerHTML = `
+    <div class="results-header">
+      <h2>计算结果</h2>
+      <div class="date-tag">近12个月测算</div>
+    </div>
+    <div class="gold-bar"></div>
+
+    <!-- 汇总卡片 -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="card-label">月应发（含加班）</div>
+        <div class="card-value">¥${fmt(d0.grossMin)}<span class="unit">~</span></div>
+        <div class="card-value" style="font-size:18px;">¥${fmt(d0.grossMax)}</div>
+        <div class="card-sub">绩效范围区间</div>
+      </div>
+      <div class="summary-card green">
+        <div class="card-label">月税后实发</div>
+        <div class="card-value green">¥${fmt(d0.netMin)}</div>
+        <div class="card-value" style="font-size:16px;color:#888;">~ ¥${fmt(d0.netMax)}</div>
+        <div class="card-sub">扣除五险一金+个税</div>
+      </div>
+      <div class="summary-card red">
+        <div class="card-label">年度总收入</div>
+        <div class="card-value red">¥${fmt(annual.annualGrossMin)}</div>
+        <div class="card-value" style="font-size:14px;color:#888;">最高 ¥${fmt(annual.annualGrossMax)}</div>
+        <div class="card-sub">税前应发合计</div>
+      </div>
+      <div class="summary-card blue">
+        <div class="card-label">年度个人所得税</div>
+        <div class="card-value" style="color:var(--blue);">¥${fmt(annual.annualTaxTotal)}</div>
+        <div class="card-sub">五险一金 ¥${fmt(annual.annualSITotal)}</div>
+      </div>
+    </div>
+
+    <!-- 范围条 -->
+    <div class="range-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:700;color:var(--ink);">年度税后实发区间</span>
+        <span style="font-size:11px;color:#888;">¥${fmt(annual.annualNetMin)} ~ ¥${fmt(annual.annualNetMax)}</span>
+      </div>
+      <div class="range-bar-outer">
+        <div class="range-bar-fill" style="width:${Math.min(95, rangeRatio + 10)}%;"></div>
+      </div>
+      <div class="range-labels">
+        <span style="color:var(--green);font-weight:700;">最低 ¥${fmt(annual.annualNetMin)}</span>
+        <span style="color:var(--red);font-weight:700;">最高 ¥${fmt(annual.annualNetMax)}</span>
+      </div>
+    </div>
+
+    <!-- 收入明细 + 社保明细 -->
+    <div class="breakdown-grid">
+      <!-- 月收入构成 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-num">¥</div>
+          <div class="card-title">月收入构成明细</div>
+        </div>
+        <div class="card-body">
+          <div class="line-item">
+            <span class="li-label">基本工资</span>
+            <span class="li-value">¥ ${fmt(d0.baseSalary)}</span>
+          </div>
+          <div class="line-item">
+            <span class="li-label">全勤奖</span>
+            <span class="li-value">¥ ${fmt(d0.attendance)}</span>
+          </div>
+          <div class="line-item">
+            <span class="li-label">夜班补助</span>
+            <span class="li-value">¥ ${fmt(d0.nightAllow)}</span>
+          </div>
+          <div class="line-item">
+            <span class="li-label">其他补贴</span>
+            <span class="li-value">¥ ${fmt(d0.otherAllow)}</span>
+          </div>
+          <div class="line-item">
+            <span class="li-label">绩效奖金 <span class="badge-tag ot">浮动</span></span>
+            <span class="li-value">¥ ${fmt(d0.perfMin)} ~ ${fmt(d0.perfMax)}</span>
+          </div>
+          <div class="line-item">
+            <span class="li-label">平时加班费 <span class="badge-tag ot">${data[0].wdH}h</span></span>
+            <span class="li-value">¥ ${fmt(d0.otWd)}</span>
+          </div>
+          <div class="line-item">
+            <span class="li-label">周末加班费 <span class="badge-tag ot">${data[0].weH}h</span></span>
+            <span class="li-value">¥ ${fmt(d0.otWe)}</span>
+          </div>
+          <div class="line-item">
+            <span class="li-label">节假日加班费 <span class="badge-tag ot">${data[0].hdH}h</span></span>
+            <span class="li-value">¥ ${fmt(d0.otHd)}</span>
+          </div>
+          <div class="line-item total">
+            <span class="li-label">月应发合计（含绩效均值）</span>
+            <span class="li-value">¥ ${fmt(d0.grossMid)}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 扣款明细 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-num" style="background:var(--red);">扣</div>
+          <div class="card-title">扣款 / 社保 / 个税</div>
+        </div>
+        <div class="card-body">
+          <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:8px;">社保基数: ¥${fmt(d0.siBase)}（${annual.siBaseType==='base'?'基本工资':'实际应发'}）</div>
+          <table class="si-table" style="margin-bottom:12px;">
+            <thead><tr><th>项目</th><th>基数</th><th>比率</th><th>个人扣款</th></tr></thead>
+            <tbody>${siTR}</tbody>
+          </table>
+          <div class="line-item deduct">
+            <span class="li-label">五险一金合计</span>
+            <span class="li-value">- ¥ ${fmt(d0.siTotal)}</span>
+          </div>
+          <div class="line-item deduct">
+            <span class="li-label">个人所得税（第1月）</span>
+            <span class="li-value">- ¥ ${fmt2(d0.monthTax)}</span>
+          </div>
+          <div class="line-item net">
+            <span class="li-label" style="font-weight:700;color:var(--green);font-size:13px;">月税后实发（均值绩效）</span>
+            <span class="li-value">¥ ${fmt(d0.grossMid - d0.siTotal - d0.monthTax)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 月度趋势图 -->
+    <div class="chart-area">
+      <div class="chart-header">
+        <div class="card-num">📊</div>
+        <div class="card-title">近12个月应发工资趋势</div>
+      </div>
+      <div class="chart-body">
+        <div class="bar-chart">${barItems}</div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot income"></div>月应发（均值绩效）</div>
+          <div class="legend-item"><div class="legend-dot tax"></div>当月个税</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12个月 IIT 明细 -->
+    <div class="card iit-card">
+      <div class="card-header">
+        <div class="card-num" style="background:#2471a3;color:#fff;">税</div>
+        <div class="card-title">近12个月个人所得税测算（累计预扣法）</div>
+      </div>
+      <div class="card-body">
+        <table class="iit-table">
+          <thead>
+            <tr>
+              <th>月份</th>
+              <th>月应发</th>
+              <th>五险一金</th>
+              <th>专项附加扣除</th>
+              <th>累计应税所得</th>
+              <th>当月预缴个税</th>
+              <th>月税后区间</th>
+            </tr>
+          </thead>
+          <tbody>${iitRows}</tbody>
+          <tfoot>
+            <tr>
+              <td><strong>年度合计</strong></td>
+              <td class="num">¥ ${fmt(annual.annualGrossMin)} ~ ${fmt(annual.annualGrossMax)}</td>
+              <td class="num">¥ ${fmt(annual.annualSITotal)}</td>
+              <td class="num">-¥ ${fmt(annual.annualDedTotal)}</td>
+              <td class="num">¥ ${fmt(data[11].cumTaxable)}</td>
+              <td class="num" style="color:var(--gold-l);">¥ ${fmt2(annual.annualTaxTotal)}</td>
+              <td class="num" style="color:var(--gold-l);">¥ ${fmt(annual.annualNetMin)} ~ ${fmt(annual.annualNetMax)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Tooltip
+function showTip(e, text) {
+  const t = document.getElementById('tooltip');
+  t.textContent = text;
+  t.style.display = 'block';
+  t.style.left = (e.clientX + 10) + 'px';
+  t.style.top  = (e.clientY - 28) + 'px';
+}
+function hideTip() { document.getElementById('tooltip').style.display = 'none'; }
+
+// ──────────────────────────────────────────────────────────────
+// City selector -> auto fill min wage
+function onCityChange() {
+  const sel = document.getElementById('city_select');
+  const val = sel.value;
+  if (val && val !== '1800') {
+    document.getElementById('min_wage').value = val;
+  }
+}
+
+// Live update deduction total display
+['ded_child','ded_edu','ded_loan','ded_rent','ded_elder','ded_baby','ded_other'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', () => {
+    const total = ['ded_child','ded_edu','ded_loan','ded_rent','ded_elder','ded_baby','ded_other']
+      .reduce((s,i) => s + (parseFloat(document.getElementById(i)?.value)||0), 0);
+    const el = document.getElementById('ded_total_val');
+    if (el) el.textContent = '¥ ' + total.toLocaleString('zh-CN');
+  });
+});
+
+// ── Auto-calculate on load ─────────────────────────────────────
+window.onload = () => calculate();
+</script>
+</body>
+</html>
